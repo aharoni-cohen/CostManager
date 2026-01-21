@@ -7,7 +7,7 @@ async function createUser() {
         id: 123123,
         first_name: "Moshe",
         last_name: "Cohen",
-
+        // שינינו לפורמט בינלאומי תקין (שנה-חודש-יום)
         birthday: "1990-01-01"
     };
 
@@ -29,4 +29,7 @@ async function createUser() {
         }
     }
 }
-createUser();//d
+
+createUser();
+
+//ימניוקית
