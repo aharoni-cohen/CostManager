@@ -7,6 +7,7 @@ const pino = require('pino');
 
 
 const app = express();
+app.set('json spaces', 2);
 app.use(express.json());
 const logger = pino();
 

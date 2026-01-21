@@ -1,23 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const Cost = require('../models/costs');
+// Import required models and logger
 const Report = require('../models/report');
 const User = require('../models/users');
 const logger = require('pino')();
 
 /*
  * GET /api/report
- * Implements the Computed Design Pattern.
- * Logic:
- * 1. Checks if the requested report is for a past month.
- * 2. If it is a past month, checks the 'reports' collection for a cached version.
- * 3. If no cache exists (or it's the current month), calculates data from the 'costs' collection.
- * 4. Saves the calculated report to the cache only if it represents a past month.
+ * Retrieves monthly report. Uses Computed Pattern: checks cache for past months,
+ * otherwise calculates data from raw costs and caches the result if applicable.
  */
 router.get('/report', async (req, res, next) => {
     try {
         const id = parseInt(req.query.id);
         const year = parseInt(req.query.year);
+        // Parse the month parameter to ensure it is an integer
         const month = parseInt(req.query.month);
 
         if (!id || !year || !month) {
@@ -27,30 +25,28 @@ router.get('/report', async (req, res, next) => {
             });
         }
 
-        // Determine if the requested date is in the past
+        // Determine if the requested date represents a past month
         const now = new Date();
         const isPast = (year < now.getFullYear()) ||
             (year === now.getFullYear() && month < (now.getMonth() + 1));
 
-        // 1. Check if the report already exists (Cache Hit)
-        // This only applies to past reports, as current month reports change dynamically.
         if (isPast) {
+            // Check the database for an existing cached report
             const existingReport = await Report.findOne({ userid: id, year: year, month: month });
 
             if (existingReport) {
                 logger.info({ endpoint: '/api/report', method: 'GET', status: 'cache_hit' });
-                // Note: Using 'data' field as defined in the Report model
                 return res.json({
                     userid: existingReport.userid,
                     year: existingReport.year,
+                    // Return the cached data structure directly
                     month: existingReport.month,
                     costs: existingReport.data
                 });
             }
         }
 
-        // 2. Fetch costs for specific month/year if report doesn't exist
-        // Using 'created_at' to match the Cost model definition
+        // Fetch raw cost documents from the collection for the specific range
         const costs = await Cost.find({
             userid: id,
             created_at: {
@@ -59,11 +55,12 @@ router.get('/report', async (req, res, next) => {
             }
         });
 
-        // 3. Structure data by categories as requested
+        // Define the required categories for the report structure
         const categories = ["food", "health", "housing", "sports", "education"];
         const groupedCosts = categories.map(cat => {
             const categoryObj = {};
             categoryObj[cat] = costs
+                // Filter and map costs to the simplified object format
                 .filter(c => c.category === cat)
                 .map(c => ({
                     sum: c.sum,
@@ -73,19 +70,20 @@ router.get('/report', async (req, res, next) => {
             return categoryObj;
         });
 
-        // 4. Save the newly computed report ONLY if it is a past month
         if (isPast) {
+            // Save the newly computed report to the cache for future use
             const newReport = new Report({
                 userid: id,
                 year: year,
                 month: month,
-                data: groupedCosts // Saving to 'data' field
+                data: groupedCosts
             });
 
             await newReport.save();
             logger.info({ endpoint: '/api/report', method: 'GET', status: 'computed_and_saved' });
         }
 
+        // Send the final JSON response with the grouped costs
         res.json({
             userid: id,
             year: year,
@@ -94,6 +92,7 @@ router.get('/report', async (req, res, next) => {
         });
 
     } catch (err) {
+        // Log the error and return a server error status
         logger.error(err);
         res.status(500).json({ id: "server_error", message: err.message });
     }
@@ -101,17 +100,19 @@ router.get('/report', async (req, res, next) => {
 
 /*
  * POST /api/add
- * Validates user existence before adding cost item.
+ * Adds a new cost item. Validates that all fields are present and
+ * checks if the user exists in the database before saving.
  */
 router.post('/add', async (req, res, next) => {
     try {
         const { userid, description, category, sum } = req.body;
 
+        // Ensure all required fields are present in the request body
         if (!userid || !description || !category || !sum) {
             return res.status(400).json({ id: "missing_fields", message: "All fields are required" });
         }
 
-        // Validate user existence (Requirement Q&A 11)
+        // Query the Users collection to verify that the user exists
         const userExists = await User.findOne({ id: userid });
         if (!userExists) {
             return res.status(404).json({ id: "user_not_found", message: "User ID does not exist" });
@@ -120,18 +121,20 @@ router.post('/add', async (req, res, next) => {
         const newCost = new Cost({
             userid: parseInt(userid),
             description,
+            // Assign the category and ensure sum is a float
             category,
             sum: parseFloat(sum),
-            // Use provided date or default to now. Maps to 'created_at' in model.
             created_at: req.body.date ? new Date(req.body.date) : new Date()
         });
 
+        // Save the new cost item to the database
         const savedCost = await newCost.save();
         logger.info({ endpoint: '/api/add', method: 'POST', status: 'success' });
 
         res.json(savedCost);
 
     } catch (err) {
+        // Handle any errors during the save process
         logger.error(err);
         res.status(500).json({ id: "server_error", message: err.message });
     }
