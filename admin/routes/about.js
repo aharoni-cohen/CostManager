@@ -9,8 +9,8 @@ const router = express.Router();
 router.get('/about', (req, res) => {
     try {
         const team = [
-            { first_name: "Eden", last_name: "Charkachi" },
-            { first_name: "Aharoni", last_name: "Cohen" }
+            { first_name: process.env.DEV1_FIRST, last_name: process.env.DEV1_LAST },
+            { first_name: process.env.DEV2_FIRST, last_name: process.env.DEV2_LAST }
         ];
         res.json(team);
     } catch (err) {

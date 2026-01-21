@@ -20,4 +20,4 @@ const logSchema = new mongoose.Schema({
 });
 
 // Exporting the model and explicitly naming the collection 'logs'.
-module.exports = mongoose.model('Log', logSchema, 'logs');
+module.exports = mongoose.model('Logs', logSchema, 'logs');
