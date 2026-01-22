@@ -8,15 +8,9 @@ async function createUsers() {
         {
             id: 123123,
             first_name: "Moshe",
-            last_name: "Cohen",
+            last_name: "israeli",
             birthday: "1990-01-01"
         },
-        {
-            id: 1231234, // שים לב שה-ID שונה, זה מצוין
-            first_name: "Eden",
-            last_name: "Aharoni",
-            birthday: "1995-05-05"
-        }
     ];
 
     // לולאה שעוברת משתמש-משתמש

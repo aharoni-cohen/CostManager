@@ -1,0 +1,85 @@
+a=http://localhost:3001
+b=http://localhost:3002
+c=http://localhost:3003
+d=http://localhost:3004
+
+testing getting the about
+-------------------------
+url=http://localhost:3004/api/about/
+data.status_code=200
+b'[{},{}]'
+data.text=[{},{}]
+
+
+testing getting the report - 1
+------------------------------
+url=http://localhost:3003/api/report/?id=123123&year=2026&month=1
+data.status_code=200
+b'{\n  "userid": 123123,\n  "year": 2026,\n  "month": 1,\n  "costs": [\n    {\n      "food": []\n    },\n    {\n      "health": []\n    },\n    {\n      "housing": []\n    },\n    {\n      "sports": []\n    },\n    {\n      "education": []\n    }\n  ]\n}'
+data.text={
+  "userid": 123123,
+  "year": 2026,
+  "month": 1,
+  "costs": [
+    {
+      "food": []
+    },
+    {
+      "health": []
+    },
+    {
+      "housing": []
+    },
+    {
+      "sports": []
+    },
+    {
+      "education": []
+    }
+  ]
+}
+
+
+
+testing adding cost item
+----------------------------------
+url=http://localhost:3003/api/add/
+data.status_code=200
+b'{\n  "userid": 123123,\n  "description": "milk 9",\n  "category": "food",\n  "sum": 8,\n  "created_at": "2026-01-22T18:26:25.483Z",\n  "_id": "69726bd16147741bc343eac7",\n  "__v": 0\n}'
+
+
+testing getting the report - 2
+------------------------------
+url=http://localhost:3003/api/report/?id=123123&year=2026&month=1
+data.status_code=200
+b'{\n  "userid": 123123,\n  "year": 2026,\n  "month": 1,\n  "costs": [\n    {\n      "food": [\n        {\n          "sum": 8,\n          "description": "milk 9",\n          "day": 22\n        }\n      ]\n    },\n    {\n      "health": []\n    },\n    {\n      "housing": []\n    },\n    {\n      "sports": []\n    },\n    {\n      "education": []\n    }\n  ]\n}'
+data.text={
+  "userid": 123123,
+  "year": 2026,
+  "month": 1,
+  "costs": [
+    {
+      "food": [
+        {
+          "sum": 8,
+          "description": "milk 9",
+          "day": 22
+        }
+      ]
+    },
+    {
+      "health": []
+    },
+    {
+      "housing": []
+    },
+    {
+      "sports": []
+    },
+    {
+      "education": []
+    }
+  ]
+}
+
+
