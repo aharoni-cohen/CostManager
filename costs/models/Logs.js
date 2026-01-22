@@ -18,6 +18,9 @@ const logSchema = new mongoose.Schema({
     // Allowing flexible structure for dynamic log metadata.
     strict: false
 });
+// Creating the model based on the schema.
+// This model will be used to interact with the 'logs' collection in MongoDB.
+const Logs = mongoose.model('Logs', logSchema, 'logs');
 
-// Exporting the model and explicitly naming the collection 'logs'.
-module.exports = mongoose.model('Log', logSchema, 'logs');
+// Exporting the model for use in other parts of the application.
+module.exports = Logs;

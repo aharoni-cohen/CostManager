@@ -3,17 +3,22 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 const pino = require('pino');
-const Log = require('./models/logs');
 
-// 1. Load environment variables from the parent directory
+// Importing the Logs model for request tracking
+const Logs = require('./models/Logs');
+
+// Load environment variables from the configuration file
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
+
+// Middleware to parse incoming JSON request bodies
 app.use(express.json());
 
+// Initialize the Pino logger for server console output
 const logger = pino();
 
-// 2. Middleware to log every incoming HTTP request
+// Middleware to capture and log every incoming HTTP request to MongoDB
 app.use((req, res, next) => {
     const logEntry = {
         method: req.method,
@@ -21,45 +26,39 @@ app.use((req, res, next) => {
         timestamp: new Date()
     };
 
+    // Output log data to the console
     logger.info(logEntry);
 
-    // Dynamic import of Log model to save request data to MongoDB
-
-    const newLog = new Log(logEntry);
-
-    // Only attempt to save logs if the database connection is active (readyState 1)
-    newLog.save().catch(err => {
-        if (mongoose.connection.readyState === 1) {
-            console.error("Failed to save log:", err.message);
-        }
-    });
+    // Create a new log instance and save it if the database connection is ready
+    if (mongoose.connection.readyState === 1) {
+        const newLog = new Logs(logEntry);
+        newLog.save().catch(err => console.error("Failed to save log:", err.message));
+    }
 
     next();
 });
 
-// 3. Establish connection to MongoDB Atlas using URI from .env
+// Establish a connection to the remote MongoDB Atlas cluster
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
-        console.log('Successfully connected to MongoDB Atlas');
+        console.log('Users Service: Successfully connected to MongoDB');
     })
     .catch(err => {
-        console.error('MongoDB connection error details:', err.message);
+        console.error('MongoDB connection error:', err.message);
     });
 
-// 4. Import the Users router
+// Import the user-related route handlers
 const usersRouter = require('./routes/users');
 
-// 5. Route Mapping
-// Map /api/users to handle user listing and specific user details
-app.use('/api/users', usersRouter);
-// Map /api to handle specific endpoints like /api/add defined in the router
+// Map the router to the /api prefix to handle user operations
 app.use('/api', usersRouter);
 
-// 6. Start the server on the specified port
+// Define the service port and start the server
 const PORT = process.env.PORT_USERS || 3002;
+
 app.listen(PORT, () => {
     console.log(`Users Service is running on port ${PORT}`);
 });
 
-// Export the app instance for Unit Testing purposes
+// Export the application instance for testing and modularity
 module.exports = app;
