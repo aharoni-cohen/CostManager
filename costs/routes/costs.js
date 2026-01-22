@@ -6,9 +6,9 @@
 
 const express = require('express');
 const router = express.Router();
-const Cost = require('../models/costs');
+const Cost = require('../models/Costs');
 const Report = require('../models/Report');
-const Users = require('../models/users');
+const Users = require('../models/Users');
 
 /*
  * GET /api/report
